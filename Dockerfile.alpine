@@ -1,0 +1,68 @@
+FROM --platform=linux/x86_64 alpine:3.16.2
+
+RUN apk update --no-cache
+
+# install cups
+RUN apk add --no-cache cups cups-filters cups-client
+
+# create user print
+# set password to print
+# add user to lp, lpadmin
+RUN adduser -S print \
+  && echo print:print | /usr/sbin/chpasswd \
+  && addgroup print lp \
+  && addgroup print lpadmin \
+
+
+###### Install papercut
+
+RUN apk add --no-cache curl bash perl
+
+# Download papercut
+ENV PAPERCUT_MAJOR_VER 21.x
+ENV PAPERCUT_VER 21.0.4.57587
+ENV PAPERCUT_DOWNLOAD_URL https://cdn1.papercut.com/web/products/ng-mf/installers/mf/${PAPERCUT_MAJOR_VER}/pcmf-setup-${PAPERCUT_VER}.sh
+RUN curl -L "${PAPERCUT_DOWNLOAD_URL}" -o /pcmf-setup.sh && chmod a+rx /pcmf-setup.sh
+
+# Create user && install papercut
+RUN adduser -D -h /papercut papercut
+USER papercut 
+RUN /pcmf-setup.sh -e \
+  && sed -i -e 's/x86_64/aarch64/g' /papercut/install
+  && /papercut/install --non-interactive
+
+USER root
+RUN rm -f /pcmf-setup.sh && /papercut/MUST-RUN-AS-ROOT
+
+# Stopping Papercut services before capturing image
+RUN /etc/init.d/papercut stop && /etc/init.d/papercut-web-print stop
+
+VOLUME /papercut/server/data/conf /papercut/server/custom /papercut/server/logs /papercut/server/data/backups /papercut/server/data/archive
+
+EXPOSE 631 9191 9192 9193
+
+###### Install selenium
+# required for automating setting up papercut from it's ui
+
+RUN echo "http://dl-4.alpinelinux.org/alpine/v3.14/main" >> /etc/apk/repositories && \
+    echo "http://dl-4.alpinelinux.org/alpine/v3.14/community" >> /etc/apk/repositories
+
+RUN apk update
+RUN apk add chromium chromium-chromedriver
+
+# upgrade pip
+RUN pip install --upgrade pip
+
+# install selenium
+RUN pip install selenium
+
+COPY cups.conf /etc/cups/cupsd.conf
+COPY server.properties /papercut/server/server.properties
+COPY entrypoint.sh /
+
+WORKDIR /papercut
+ENTRYPOINT ["/entrypoint.sh"]
+
+
+
+

@@ -16,10 +16,10 @@ jobs:
         with:
           file: Dockerfile.ubuntu
           context: .
-          tag: papercut:latest-ubuntu
+          tags: papercut:latest-ubuntu
       # - name: Build papercut for alpine
       #   uses: docker/build-push-action@v3
       #   with:
       #     file: Dockerfile.alpine
       #     context: .
-      #     tag: papercut:latest-alpine
+      #     tags: papercut:latest-alpine
