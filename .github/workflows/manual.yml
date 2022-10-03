@@ -1,9 +1,13 @@
 name: cd
 
 on:
-  push:
-    branches:
-      - 'main'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag'
+        required: true
+        type: string
+        default: latest
 
 jobs:
   deploy:
@@ -21,12 +25,12 @@ jobs:
         with:
           file: Dockerfile.ubuntu
           context: .
-          tag: papercut:latest-ubuntu
+          tag: papercut:${{ inputs.tag }}-ubuntu
           push: true
       # - name: Build papercut for alpine
       #   uses: docker/build-push-action@v3
       #   with:
       #     file: Dockerfile.alpine
       #     context: .
-      #     tag: papercut:latest-alpine
+      #     tag: papercut:${{ inputs.tag }}-alpine
       #     push: true
