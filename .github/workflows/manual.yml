@@ -25,12 +25,12 @@ jobs:
         with:
           file: Dockerfile.ubuntu
           context: .
-          tags: papercut:${{ inputs.tag }}-ubuntu
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/papercut:${{ inputs.tag }}-ubuntu
           push: true
       # - name: Build papercut for alpine
       #   uses: docker/build-push-action@v3
       #   with:
       #     file: Dockerfile.alpine
       #     context: .
-      #     tags: papercut:${{ inputs.tag }}-alpine
+      #     tags: ${{ secrets.DOCKER_HUB_USERNAME }}/papercut:${{ inputs.tag }}-alpine
       #     push: true
