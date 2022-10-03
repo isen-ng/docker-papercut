@@ -44,7 +44,7 @@ RUN runuser -l papercut -c "/pcmf-setup.sh --non-interactive" && rm -f /pcmf-set
 RUN /etc/init.d/papercut stop && /etc/init.d/papercut-web-print stop
 
 # so that we can easily print a test file
-# docker exec <name> runuser -l <user> "lp -d nul lorem-ipsum.pdf"
+# docker exec <container> runuser -l <user> "lp -d nul /lorem-ipsum.pdf"
 COPY lorem-ipsum.pdf /
 
 COPY server.properties /papercut/server/server.properties

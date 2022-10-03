@@ -1,0 +1,124 @@
+version: '3.8'
+
+services:
+  paper-cut:
+    container_name: paper-cut
+    image: isengrim/papercut
+    ports:
+      - "9191:9191"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9191" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  paper-cut-setter-upper:
+    image: joyzoursky/python-chromedriver:3.6-alpine3.7-selenium
+    restart: "no"
+    depends_on:
+      paper-cut:
+        condition: service_healthy
+    tty: true
+    environment:
+      # all dollar signs are escaped by adding another dollar sign
+      # $ -> $$
+      PY_SCRIPT: |
+        from selenium import webdriver
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--window-size=1420,1080')
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--disable-gpu')
+        driver = webdriver.Chrome(chrome_options=chrome_options)
+        driver.implicitly_wait(10)
+
+        driver.get('http://paper-cut:9191/app')
+
+        print('setting admin pw ...')
+        pw_element = driver.find_element_by_id('adminPwd')
+        pw_element.send_keys('abcd1234')
+
+        pw_again_element = driver.find_element_by_name('passwordVerify')
+        pw_again_element.send_keys('abcd1234')
+
+        submit = driver.find_element_by_name('$$Submit')
+        submit.click()
+
+        print('setting organization ...')
+        org_radio = driver.find_element_by_id('orgPro')
+        org_radio.click()
+
+        submit = driver.find_element_by_name('$$Submit')
+        submit.click()
+
+        print('setting printing cost ...')
+        submit = driver.find_element_by_name('$$Submit')
+        submit.click()
+
+        print('skipping user import ...')
+        skip = driver.find_element_by_id('skipUserSourceLink')
+        skip.click()
+
+        print('setting client options ...')
+        strategy_all_radio = driver.find_element_by_id('strategyAll')
+        strategy_all_radio.click()
+
+        submit = driver.find_element_by_name('$$Submit$$0')
+        submit.click()
+
+        print('confirming ...')
+        submit = driver.find_element_by_name('$$Submit')
+        submit.click()
+    command:
+      - "sh"
+      - "-c"
+      - |
+        [ -e "/tmp/completed" ] && exit 0 || \
+        echo "$$PY_SCRIPT" > /script.py && \
+        python script.py && \
+        touch /tmp/completed
+  paper-cut-configurer:
+    image: docker
+    restart: "no"
+    depends_on:
+      paper-cut-setter-upper:
+        condition: service_completed_successfully
+    tty: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      # all dollar signs are escaped by adding another dollar sign
+      # $ -> $$
+      SCRIPT: |
+        SERVER=paper-cut
+        COMMAND=/papercut/server/bin/linux-x64/server-command
+
+        echo "setting api related stuff ..."
+        docker exec $$SERVER $$COMMAND set-config auth.webservices.allowed-addresses \*
+        docker exec $$SERVER $$COMMAND set-config auth.webservices.auth-token abcd1234
+        docker exec $$SERVER $$COMMAND set-config system.normalize-network-username N
+
+        echo "enabling internal users..."
+        docker exec $$SERVER $$COMMAND set-config internal-users.enable Y
+
+        echo "creating new internal user: example ..."
+        docker exec $$SERVER $$COMMAND add-new-internal-user example abcd1234 "John Doe" john-doe@example.com 123456 123456
+        docker exec $$SERVER $$COMMAND set-user-account-selection-auto-charge-personal example
+        docker exec $$SERVER $$COMMAND set-user-property example restricted FALSE
+
+        echo "creating new cups user: example ..."
+        docker exec $$SERVER useradd --groups=lp example
+
+        echo "creating a dummy print for user: example ..."
+        docker exec $$SERVER runuser -l <user> "lp -d nul /lorem-ipsum.pdf"
+    command:
+      - "sh"
+      - "-c"
+      - |
+        [ -e "/tmp/completed" ] && exit 0 || \
+        echo "$$SCRIPT" > /script.sh && \
+        sh script.sh && \
+        touch /tmp/completed
+
+networks:
+  default:
+    name: papercut
