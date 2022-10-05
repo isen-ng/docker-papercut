@@ -32,8 +32,11 @@ ENV PAPERCUT_VER 21.0.4.57587
 ENV PAPERCUT_DOWNLOAD_URL https://cdn1.papercut.com/web/products/ng-mf/installers/mf/${PAPERCUT_MAJOR_VER}/pcmf-setup-${PAPERCUT_VER}.sh
 RUN curl -L "${PAPERCUT_DOWNLOAD_URL}" -o /pcmf-setup.sh && chmod a+rx /pcmf-setup.sh
 
-# Create user && install papercut
+# Create user
 RUN adduser -D -h /papercut papercut
+
+# install papercut
+RUN alias service=rc-service
 RUN runuser -l papercut -c "/pcmf-setup.sh --non-interactive" && rm -f /pcmf-setup.sh && /papercut/MUST-RUN-AS-ROOT
 
 #USER papercut
