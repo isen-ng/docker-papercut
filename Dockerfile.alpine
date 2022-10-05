@@ -24,7 +24,7 @@ EXPOSE 631
 
 ###### Install papercut
 
-RUN apk add --no-cache cups curl cpio bash perl runuser rc-service
+RUN apk add --no-cache cups curl cpio bash perl runuser openrc
 
 # Download papercut
 ENV PAPERCUT_MAJOR_VER 21.x
