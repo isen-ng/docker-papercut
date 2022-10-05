@@ -24,7 +24,7 @@ EXPOSE 631
 
 ###### Install papercut
 
-RUN apk add --no-cache cups curl cpio bash perl runuser
+RUN apk add --no-cache cups curl cpio bash perl runuser rc-service
 
 # Download papercut
 ENV PAPERCUT_MAJOR_VER 21.x
@@ -36,7 +36,7 @@ RUN curl -L "${PAPERCUT_DOWNLOAD_URL}" -o /pcmf-setup.sh && chmod a+rx /pcmf-set
 RUN adduser -D -h /papercut papercut
 
 # install papercut
-RUN alias service=rc-service
+RUN echo "alias service=rc-service" > /etc/profile.d/00-aliases.sh
 RUN runuser -l papercut -c "/pcmf-setup.sh --non-interactive" && rm -f /pcmf-setup.sh && /papercut/MUST-RUN-AS-ROOT
 
 #USER papercut
