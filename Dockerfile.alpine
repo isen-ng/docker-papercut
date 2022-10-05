@@ -12,7 +12,7 @@ RUN apk add --no-cache cups cups-filters cups-client
 RUN adduser -S cups \
   && echo cups:cups | /usr/sbin/chpasswd \
   && addgroup cups lp \
-  && addgroup cups lpadmin \
+  && addgroup cups lpadmin
 
 # create default printer by writing to the conf file
 # this file is needed by papercut to monitor stuff
