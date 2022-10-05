@@ -28,7 +28,7 @@ EXPOSE 631
 
 ###### Install papercut
 
-RUN apt-get install -y cup curl cpio perlbrew
+RUN apt-get install -y cups curl cpio perlbrew
 
 # Download papercut
 ENV PAPERCUT_MAJOR_VER 21.x

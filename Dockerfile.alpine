@@ -2,21 +2,29 @@ FROM --platform=linux/x86_64 alpine:3.16.2
 
 RUN apk update --no-cache
 
-# install cups
+
+###### Install CUPS
 RUN apk add --no-cache cups cups-filters cups-client
 
-# create user print
-# set password to print
+# create user cups
+# set password to cups
 # add user to lp, lpadmin
-RUN adduser -S print \
-  && echo print:print | /usr/sbin/chpasswd \
-  && addgroup print lp \
-  && addgroup print lpadmin \
+RUN adduser -S cups \
+  && echo cups:cups | /usr/sbin/chpasswd \
+  && addgroup cups lp \
+  && addgroup cups lpadmin \
+
+# create default printer by writing to the conf file
+# this file is needed by papercut to monitor stuff
+COPY printers.conf /etc/cups/printers.conf
+
+COPY cups.conf /etc/cups/cupsd.conf
+EXPOSE 631
 
 
 ###### Install papercut
 
-RUN apk add --no-cache curl bash perl
+RUN apk add --no-cache cups curl cpio bash perl runuser
 
 # Download papercut
 ENV PAPERCUT_MAJOR_VER 21.x
@@ -26,43 +34,27 @@ RUN curl -L "${PAPERCUT_DOWNLOAD_URL}" -o /pcmf-setup.sh && chmod a+rx /pcmf-set
 
 # Create user && install papercut
 RUN adduser -D -h /papercut papercut
-USER papercut 
-RUN /pcmf-setup.sh -e \
-  && sed -i -e 's/x86_64/aarch64/g' /papercut/install
-  && /papercut/install --non-interactive
+RUN runuser -l papercut -c "/pcmf-setup.sh --non-interactive" && rm -f /pcmf-setup.sh && /papercut/MUST-RUN-AS-ROOT
 
-USER root
-RUN rm -f /pcmf-setup.sh && /papercut/MUST-RUN-AS-ROOT
+#USER papercut
+#RUN /pcmf-setup.sh --non-interactive
+#USER root
+#RUN rm -f /pcmf-setup.sh && /papercut/MUST-RUN-AS-ROOT
 
 # Stopping Papercut services before capturing image
 RUN /etc/init.d/papercut stop && /etc/init.d/papercut-web-print stop
 
-VOLUME /papercut/server/data/conf /papercut/server/custom /papercut/server/logs /papercut/server/data/backups /papercut/server/data/archive
+# so that we can easily print a test file
+# docker exec <container> runuser -l <user> "lp -d nul /lorem-ipsum.pdf"
+COPY lorem-ipsum.pdf /
 
-EXPOSE 631 9191 9192 9193
-
-###### Install selenium
-# required for automating setting up papercut from it's ui
-
-RUN echo "http://dl-4.alpinelinux.org/alpine/v3.14/main" >> /etc/apk/repositories && \
-    echo "http://dl-4.alpinelinux.org/alpine/v3.14/community" >> /etc/apk/repositories
-
-RUN apk update
-RUN apk add chromium chromium-chromedriver
-
-# upgrade pip
-RUN pip install --upgrade pip
-
-# install selenium
-RUN pip install selenium
-
-COPY cups.conf /etc/cups/cupsd.conf
 COPY server.properties /papercut/server/server.properties
+EXPOSE 9191 9192 9193
+
+
+###### Clean up
+
 COPY entrypoint.sh /
 
 WORKDIR /papercut
 ENTRYPOINT ["/entrypoint.sh"]
-
-
-
-

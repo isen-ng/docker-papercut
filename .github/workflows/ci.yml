@@ -17,9 +17,9 @@ jobs:
           file: Dockerfile.ubuntu
           context: .
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/papercut:latest-ubuntu
-      # - name: Build papercut for alpine
-      #   uses: docker/build-push-action@v3
-      #   with:
-      #     file: Dockerfile.alpine
-      #     context: .
-      #     tags: ${{ secrets.DOCKER_HUB_USERNAME }}/papercut:latest-alpine
+      - name: Build papercut for alpine
+        uses: docker/build-push-action@v3
+        with:
+          file: Dockerfile.alpine
+          context: .
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/papercut:latest-alpine
