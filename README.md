@@ -5,10 +5,14 @@ testing purposes and not meant to run in production in any capacity.
 
 **Important**: By using this image, you agree to [papercut's eula](https://www.papercut.com/help/manuals/ng-mf/common/license/).
 
+## Registries
+
+* https://registry.hub.docker.com/r/isengrim/papercut
+
 ## Tags
 
 * `latest-ubuntu`
-* `latest-alpine`
+* `latest-alpine` (help needed to verify that it works)
 
 ## Features
 
