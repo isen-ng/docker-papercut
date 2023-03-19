@@ -58,6 +58,7 @@ EXPOSE 9191 9192 9193
 ###### Clean up
 
 COPY entrypoint.sh /
+RUN chmod +x entrypoint.sh
 
 WORKDIR /papercut
 ENTRYPOINT ["/entrypoint.sh"]

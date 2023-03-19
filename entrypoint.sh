@@ -6,5 +6,8 @@ echo "Starting cups ..."
 echo "Starting Papercut event monitor ..."
 /etc/init.d/papercut-event-monitor start
 
+echo "Starting Papercut web print ..."
+/etc/init.d/papercut-web-print start
+
 echo "Starting Papercut service in console ..."
 /etc/init.d/papercut console
