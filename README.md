@@ -5,14 +5,16 @@ testing purposes and not meant to run in production in any capacity.
 
 **Important**: By using this image, you agree to [papercut's eula](https://www.papercut.com/help/manuals/ng-mf/common/license/).
 
+**Important**: This image is x86 only, because Papercut MP is x86 only. To use this effectively on ARM, enable 
+Rosetta emulation on docker desktop
+
 ## Registries
 
 * https://registry.hub.docker.com/r/isengrim/papercut
 
 ## Tags
 
-* `latest-ubuntu`
-* `latest-alpine` (help needed to verify that it works)
+* `21.0.4.57587`, `latest`
 
 ## Features
 
@@ -28,7 +30,7 @@ testing purposes and not meant to run in production in any capacity.
 docker run -d \
     -p 9191:9191 \
     -p 631:631
-    isengrim/papercut:ubuntu-latest
+    isengrim/papercut:latest
 ```
 
 ## Example docker-compose

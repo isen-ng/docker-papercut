@@ -20,17 +20,10 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
-      - name: Build papercut for ubuntu
+      - name: Build papercut
         uses: docker/build-push-action@v3
         with:
-          file: Dockerfile.ubuntu
+          file: Dockerfile
           context: .
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/papercut:${{ inputs.tag }}-ubuntu
-          push: true
-      - name: Build papercut for alpine
-        uses: docker/build-push-action@v3
-        with:
-          file: Dockerfile.alpine
-          context: .
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/papercut:${{ inputs.tag }}-alpine
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/papercut:${{ inputs.tag }}
           push: true

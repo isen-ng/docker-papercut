@@ -11,15 +11,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Build papercut for ubuntu
+      - name: Build papercut
         uses: docker/build-push-action@v3
         with:
-          file: Dockerfile.ubuntu
+          file: Dockerfile
           context: .
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/papercut:latest-ubuntu
-      - name: Build papercut for alpine
-        uses: docker/build-push-action@v3
-        with:
-          file: Dockerfile.alpine
-          context: .
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/papercut:latest-alpine
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/papercut:latest
