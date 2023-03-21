@@ -10,7 +10,7 @@ Rosetta emulation on docker desktop
 
 ## Registries
 
-* https://registry.hub.docker.com/r/isengrim/papercut
+* https://hub.docker.com/r/isengrim/papercut
 
 ## Tags
 
