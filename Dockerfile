@@ -1,7 +1,32 @@
-FROM --platform=linux/x86_64 ubuntu:xenial
+# Use a build stage so users don't have to download the heavy installer
+FROM --platform=linux/x86_64 ubuntu:xenial AS build
 
 RUN apt-get update
 
+###### Install papercut
+
+# Install packages required for papercut
+RUN apt-get install -y cups curl cpio perlbrew
+
+# Download papercut
+ENV PAPERCUT_MAJOR_VER=21.x
+ENV PAPERCUT_VER=21.0.4.57587
+ENV PAPERCUT_DOWNLOAD_URL=https://cdn1.papercut.com/web/products/ng-mf/installers/mf/${PAPERCUT_MAJOR_VER}/pcmf-setup-${PAPERCUT_VER}.sh
+RUN curl -L "${PAPERCUT_DOWNLOAD_URL}" -o /pcmf-setup.sh && chmod a+rx /pcmf-setup.sh
+
+# Create user && install papercut
+RUN groupadd papercut
+RUN useradd --create-home --gid papercut --home /papercut papercut
+RUN runuser -l papercut -c "/pcmf-setup.sh --non-interactive" && rm -f /pcmf-setup.sh && /papercut/MUST-RUN-AS-ROOT
+
+# Stopping Papercut services before capturing image
+RUN /etc/init.d/papercut stop && /etc/init.d/papercut-web-print stop
+
+# ----------------------------------------
+
+FROM --platform=linux/x86_64 ubuntu:xenial
+
+RUN apt-get update
 
 ###### Install CUPS
 
@@ -26,24 +51,21 @@ COPY cups.conf /etc/cups/cupsd.conf
 EXPOSE 631
 
 
-###### Install papercut
+###### Copy papercut from build
+
+# Create papercut user
+RUN groupadd papercut
+RUN useradd --gid papercut --home /papercut papercut
 
 # Install packages required for papercut
 RUN apt-get install -y cups curl cpio perlbrew
 
-# Download papercut
-ENV PAPERCUT_MAJOR_VER=21.x
-ENV PAPERCUT_VER=21.0.4.57587
-ENV PAPERCUT_DOWNLOAD_URL=https://cdn1.papercut.com/web/products/ng-mf/installers/mf/${PAPERCUT_MAJOR_VER}/pcmf-setup-${PAPERCUT_VER}.sh
-RUN curl -L "${PAPERCUT_DOWNLOAD_URL}" -o /pcmf-setup.sh && chmod a+rx /pcmf-setup.sh
-
-# Create user && install papercut
-RUN groupadd papercut
-RUN useradd --create-home --gid papercut --home /papercut papercut
-RUN runuser -l papercut -c "/pcmf-setup.sh --non-interactive" && rm -f /pcmf-setup.sh && /papercut/MUST-RUN-AS-ROOT
-
-# Stopping Papercut services before capturing image
-RUN /etc/init.d/papercut stop && /etc/init.d/papercut-web-print stop
+# Copy from build stage
+COPY --from=build /papercut /papercut
+RUN chown -R papercut:papercut /papercut
+RUN ln -s /papercut/server/bin/linux-x64/app-server /etc/init.d/papercut
+RUN ln -s /papercut/providers/print/linux-x64/pc-event-monitor.rc /etc/init.d/papercut-event-monitor
+RUN ln -s /papercut/providers/web-print/linux-x64/pc-web-print.rc /etc/init.d/papercut-web-print
 
 # so that we can easily print a test file
 # docker exec <container> runuser -l <user> "lp -d nul /lorem-ipsum.pdf"
@@ -53,14 +75,15 @@ COPY server.properties /papercut/server/server.properties
 EXPOSE 9191 9192 9193
 
 
-###### Install SSH server to accept papercut commands
+###### Install SSH server to accept papercut server-commands
 
 RUN apt-get -y install openssh-server
 RUN echo "    PasswordAuthentication yes" >> /etc/ssh/ssh_config
 RUN mkdir -p /var/run/sshd
 
 # Create server-command user
-RUN useradd --gid papercut --password server-command server-command
+RUN useradd --gid papercut server-command
+RUN echo "server-command:server-command" | chpasswd
 
 # Ensure papercut group (including server-command) can access server-command binary
 RUN chmod g+rx /papercut/server/bin
