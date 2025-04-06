@@ -1,23 +1,20 @@
-version: '3.8'
-
 services:
   paper-cut:
-    container_name: paper-cut
     image: isengrim/papercut
     ports:
       - "9191:9191"
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9191" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      start_period: 30s
+      interval: 10s
+      timeout: 5s
+      retries: 6
   paper-cut-setter-upper:
     image: joyzoursky/python-chromedriver:3.6-alpine3.7-selenium
     restart: "no"
     depends_on:
       paper-cut:
         condition: service_healthy
-    tty: true
     environment:
       # all dollar signs are escaped by adding another dollar sign
       # $ -> $$
@@ -77,46 +74,33 @@ services:
         python script.py && \
         touch /tmp/completed
   paper-cut-configurer:
-    image: docker
+    image: ictu/sshpass
     restart: "no"
     depends_on:
       paper-cut-setter-upper:
         condition: service_completed_successfully
-    tty: true
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       # all dollar signs are escaped by adding another dollar sign
       # $ -> $$
       SCRIPT: |
-        SERVER=paper-cut
-        COMMAND=/papercut/server/bin/linux-x64/server-command
+        SERVER_COMMAND=/papercut/server/bin/linux-x64/server-command
 
         echo "setting api related stuff ..."
-        docker exec $$SERVER $$COMMAND set-config auth.webservices.allowed-addresses \*
-        docker exec $$SERVER $$COMMAND set-config auth.webservices.auth-token abcd1234
-        docker exec $$SERVER $$COMMAND set-config system.normalize-network-username N
+        $$SERVER_COMMAND set-config auth.webservices.allowed-addresses \*
+        $$SERVER_COMMAND set-config auth.webservices.auth-token abcd1234
+        $$SERVER_COMMAND set-config system.normalize-network-username N
 
-        echo "enabling internal users..."
-        docker exec $$SERVER $$COMMAND set-config internal-users.enable Y
+        echo "setting report related stuff ..."
+        $$SERVER_COMMAND set-config reports.csv-charset UTF-8
 
-        echo "creating new internal user: example ..."
-        docker exec $$SERVER $$COMMAND add-new-internal-user example abcd1234 "John Doe" john-doe@example.com 123456 123456
-        docker exec $$SERVER $$COMMAND set-user-account-selection-auto-charge-personal example
-        docker exec $$SERVER $$COMMAND set-user-property example restricted FALSE
-
-        echo "creating new cups user: example ..."
-        docker exec $$SERVER useradd --groups=lp example
-
-        echo "creating a dummy print for user: example ..."
-        docker exec $$SERVER runuser -l <user> "lp -d nul /lorem-ipsum.pdf"
+        echo "disable sending usage stats to papercut ..."
+        $$SERVER_COMMAND set-config analytics.enabled N
+    entrypoint: [ "/bin/sh" ]
     command:
-      - "sh"
       - "-c"
       - |
         [ -e "/tmp/completed" ] && exit 0 || \
-        echo "$$SCRIPT" > /script.sh && \
-        sh script.sh && \
+        sshpass -p server-command ssh -o StrictHostKeyChecking=no server-command@paper-cut "$$SCRIPT" && \
         touch /tmp/completed
 
 networks:

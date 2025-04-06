@@ -42,7 +42,7 @@ docker run -d \
 
 The papercut server requires several manual steps before it can be used. These steps has to be manually
 click through the UI and is impossible to automate by API. Fortunately, this can be automated by writing a 
-selenium script.
+selenium script. See [docker-compose.yml](docker-compose.yml).
 
 After that, we can run `server-command`s to further configure the server. See [server-commands](https://www.papercut.com/help/manuals/ng-mf/common/tools-server-command/).
 
