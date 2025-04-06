@@ -55,14 +55,15 @@ EXPOSE 631
 
 # Create papercut user
 RUN groupadd papercut
-RUN useradd --gid papercut --home /papercut papercut
+RUN useradd --create-home --gid papercut --home /papercut papercut
 
 # Install packages required for papercut
 RUN apt-get install -y cups curl cpio perlbrew
 
 # Copy from build stage
-COPY --from=build /papercut /papercut
-RUN chown -R papercut:papercut /papercut
+# It is important to also include `--chown=papercut:papercut` otherwise a separate command
+# will create a layer as large as the folder (which is 800+MB)
+COPY --from=build --chown=papercut:papercut /papercut /papercut
 RUN ln -s /papercut/server/bin/linux-x64/app-server /etc/init.d/papercut
 RUN ln -s /papercut/providers/print/linux-x64/pc-event-monitor.rc /etc/init.d/papercut-event-monitor
 RUN ln -s /papercut/providers/web-print/linux-x64/pc-web-print.rc /etc/init.d/papercut-web-print
