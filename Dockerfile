@@ -38,7 +38,8 @@ ENV PAPERCUT_DOWNLOAD_URL=https://cdn1.papercut.com/web/products/ng-mf/installer
 RUN curl -L "${PAPERCUT_DOWNLOAD_URL}" -o /pcmf-setup.sh && chmod a+rx /pcmf-setup.sh
 
 # Create user && install papercut
-RUN useradd -mUd /papercut papercut
+RUN groupadd papercut
+RUN useradd --create-home --gid papercut --home /papercut papercut
 RUN runuser -l papercut -c "/pcmf-setup.sh --non-interactive" && rm -f /pcmf-setup.sh && /papercut/MUST-RUN-AS-ROOT
 
 # Stopping Papercut services before capturing image
@@ -59,8 +60,10 @@ RUN echo "    PasswordAuthentication yes" >> /etc/ssh/ssh_config
 RUN mkdir -p /var/run/sshd
 
 # Create server-command user
-RUN useradd -mUd /server-command server-command
-RUN echo server-command:server-command | chpasswd
+RUN useradd --gid papercut --password server-command server-command
+
+# Ensure papercut group (including server-command) can access server-command binary
+RUN chmod g+rx /papercut/server/bin
 
 EXPOSE 22
 
