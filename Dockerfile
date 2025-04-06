@@ -28,12 +28,13 @@ EXPOSE 631
 
 ###### Install papercut
 
+# Install packages required for papercut
 RUN apt-get install -y cups curl cpio perlbrew
 
 # Download papercut
-ENV PAPERCUT_MAJOR_VER 21.x
-ENV PAPERCUT_VER 21.0.4.57587
-ENV PAPERCUT_DOWNLOAD_URL https://cdn1.papercut.com/web/products/ng-mf/installers/mf/${PAPERCUT_MAJOR_VER}/pcmf-setup-${PAPERCUT_VER}.sh
+ENV PAPERCUT_MAJOR_VER=21.x
+ENV PAPERCUT_VER=21.0.4.57587
+ENV PAPERCUT_DOWNLOAD_URL=https://cdn1.papercut.com/web/products/ng-mf/installers/mf/${PAPERCUT_MAJOR_VER}/pcmf-setup-${PAPERCUT_VER}.sh
 RUN curl -L "${PAPERCUT_DOWNLOAD_URL}" -o /pcmf-setup.sh && chmod a+rx /pcmf-setup.sh
 
 # Create user && install papercut
@@ -49,6 +50,19 @@ COPY lorem-ipsum.pdf /
 
 COPY server.properties /papercut/server/server.properties
 EXPOSE 9191 9192 9193
+
+
+###### Install SSH server to accept papercut commands
+
+RUN apt-get -y install openssh-server
+RUN echo "    PasswordAuthentication yes" >> /etc/ssh/ssh_config
+RUN mkdir -p /var/run/sshd
+
+# Create server-command user
+RUN useradd -mUd /server-command server-command
+RUN echo server-command:server-command | chpasswd
+
+EXPOSE 22
 
 
 ###### Clean up

@@ -3,6 +3,9 @@
 echo "Starting cups ..."
 /etc/init.d/cups start
 
+echo "Starting ssh server ..."
+/etc/init.d/ssh start
+
 echo "Starting Papercut event monitor ..."
 /etc/init.d/papercut-event-monitor start
 
