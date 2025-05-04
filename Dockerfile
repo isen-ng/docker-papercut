@@ -64,9 +64,12 @@ RUN apt-get install -y cups curl cpio perlbrew
 # It is important to also include `--chown=papercut:papercut` otherwise a separate command
 # will create a layer as large as the folder (which is 800+MB)
 COPY --from=build --chown=papercut:papercut /papercut /papercut
-RUN ln -s /papercut/server/bin/linux-x64/app-server /etc/init.d/papercut
-RUN ln -s /papercut/providers/print/linux-x64/pc-event-monitor.rc /etc/init.d/papercut-event-monitor
-RUN ln -s /papercut/providers/web-print/linux-x64/pc-web-print.rc /etc/init.d/papercut-web-print
+
+# Install various stuff (run this after installing cups to auto-configure cups)
+RUN /papercut/MUST-RUN-AS-ROOT
+
+# Stopping Papercut services before capturing image
+RUN /etc/init.d/papercut stop && /etc/init.d/papercut-web-print stop
 
 # so that we can easily print a test file
 # docker exec <container> runuser -l <user> "lp -d nul /lorem-ipsum.pdf"
