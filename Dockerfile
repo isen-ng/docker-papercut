@@ -85,9 +85,11 @@ RUN apt-get -y install openssh-server
 RUN echo "    PasswordAuthentication yes" >> /etc/ssh/ssh_config
 RUN mkdir -p /var/run/sshd
 
-# Create server-command user
-RUN useradd --groups=papercut,lp,lpadmin server-command
+# Create server-command user, add to sudo, papercut, lp and lpadmin groups.
+# No password to sudo
+RUN useradd --groups=sudo,papercut,lp,lpadmin server-command
 RUN echo "server-command:server-command" | chpasswd
+RUN sed -i '/%sudo[[:space:]]/ s/ALL[[:space:]]*$/NOPASSWD:ALL/' /etc/sudoers
 
 # Ensure papercut group (including server-command) can access server-command binary
 RUN chmod g+rx /papercut/server/bin
