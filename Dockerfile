@@ -86,7 +86,7 @@ RUN echo "    PasswordAuthentication yes" >> /etc/ssh/ssh_config
 RUN mkdir -p /var/run/sshd
 
 # Create server-command user
-RUN useradd --gid papercut server-command
+RUN useradd --groups=papercut,lp,lpadmin server-command
 RUN echo "server-command:server-command" | chpasswd
 
 # Ensure papercut group (including server-command) can access server-command binary
